@@ -1,3 +1,10 @@
+/***************************************************************/
+// LED Face Mask Remote
+// Bridget Tan
+// Code for Adafruit Circuit Playground IR remote controller for
+// changing color of an LED face mask.
+/***************************************************************/
+
 #include <Adafruit_CircuitPlayground.h>
 #include "codes.h"
 
@@ -5,23 +12,27 @@
 #define LED_COUNT 2
 #define CLICKTHRESHHOLD 120
 
-int mode = 0;
+int mode = 0; // what color the remote is
 int del = 0; // how long to wait before changing the mode
-uint32_t message;
-int16_t bright = 1;
-bool can_change = false;
+uint32_t message; // the color to send to the IR receiver
+int16_t bright = 1; // builtin LED brightness level
+bool can_change = false; // user can change mode if true
+bool debug = false; // debug indicator
 
-/************* Helper Functions */
-//
+/***************************************************************/
+// Helper Functions
+/***************************************************************/
+// Light up Circuit Playground's builtin LEDs with the color 
+// message to be sent
 void light_up(void){
-//  CircuitPlayground.clearPixels();
   CircuitPlayground.setBrightness(bright);
-//  Serial.println(message);
   for(int i=0;i<11;i++) {
     CircuitPlayground.setPixelColor(i, message);
   }
 }
 
+// Motion sensor tap interrupt that determines when user can
+// change modes
 void tapTime(void) {
   can_change = !can_change;
 }
@@ -32,7 +43,6 @@ void setup() {
   CircuitPlayground.setAccelRange(LIS3DH_RANGE_4_G);   // 2, 4, 8 or 16 G!// 0 = turn off click detection & interrupt
   // 1 = single click only interrupt output
   // 2 = double click only interrupt output, detect single click
-  // Adjust threshhold, higher numbers are less sensitive
   CircuitPlayground.setAccelTap(1, CLICKTHRESHHOLD);
   
   // have a procedure called when a tap is detected
@@ -42,14 +52,17 @@ void setup() {
 void loop() {
   bool smiling = false;
     
-  /************* READ LIGHT SENSOR */
+  // Read the light sensor
   int light = CircuitPlayground.lightSensor();
 
+  // Indicate if the user can change colors
   if (can_change) CircuitPlayground.redLED(HIGH);
   else CircuitPlayground.redLED(LOW);
-  
+
+  // Check the orientation of the remote
   float y = CircuitPlayground.motionY();
-//  Serial.println(light);
+  // Change the mode if the remote isn't vertical and
+  // the light sensor is covered
   if (y > -4 && can_change) {
     if (light < 10 && del == 0) {
       del = 50;
@@ -59,38 +72,40 @@ void loop() {
       }
     }
   }
-    
+
+  // Countdown the delay
   if (del > 0){
     del -= 1;
   }
-//  Serial.println(del);
 
   
   // What message are we trying to send?
   switch(mode) {
     case 0: 
-//      Serial.println("Off mode!");
+      if (debug == true) Serial.println("Off mode!");
       message = OFF; 
       break;
     case 1: 
-//      Serial.println("White mode!");
+      if (debug == true) Serial.println("White mode!");
       message = WHITE;  
       break;
     case 2: 
-//      Serial.println("Red mode!");
+      if (debug == true) Serial.println("Red mode!");
       message = RED;  
       break;
     case 3: 
-//      Serial.println("Green mode!");
+      if (debug == true) Serial.println("Green mode!");
       message = GREEN;  
       break;
     case 4: 
-//      Serial.println("Blue mode!");
+      if (debug == true) Serial.println("Blue mode!");
       message = BLUE;  
       break;
   }
-  light_up();// If the left button is pressed send a mute code.
-  
+  // Light up the builtin LEDs
+  light_up();
+
+  // Send an IR signal if the remote is vertical
   if (y < -4) {
     CircuitPlayground.irSend.send(MY_PROTOCOL,message,MY_BITS);
   }
