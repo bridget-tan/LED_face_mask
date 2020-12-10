@@ -37,6 +37,9 @@ void tapTime(void) {
   can_change = !can_change;
 }
 
+/***************************************************************/
+// SETUP
+/***************************************************************/
 void setup() {
   Serial.begin(115200);
   CircuitPlayground.begin();
@@ -49,6 +52,9 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(CPLAY_LIS3DH_INTERRUPT), tapTime, FALLING);
 }
 
+/***************************************************************/
+// LOOP
+/***************************************************************/
 void loop() {
   bool smiling = false;
     
